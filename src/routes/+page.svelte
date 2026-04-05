@@ -33,14 +33,21 @@
             width: "data(size)",
             height: "data(size)",
             "background-color": "data(rgb)" // 事前に "rgb(...)" 文字列を入れておく前提
+            
           }
         },
         {
           selector: "edge",
           style: {
-            width: 0.5,
+            width: 0.4,
             "line-color": "mapData(weight, 1, 15, blue, red)",
-            opacity: 0.3
+            opacity: 0.6
+          }
+        },
+        {
+          selector: ".faded",
+          style: {
+            opacity: 0.2
           }
         }
       ],
@@ -51,6 +58,22 @@
 
       wheelSensitivity: 5
     });
+
+    cy.on("mouseover", "node", (e) => {
+      const node = e.target;
+
+      // 全体を薄く
+      cy.elements().addClass("faded");
+
+      // 対象ノードとその周辺を強調
+      const neighborhood = node.closedNeighborhood();
+      neighborhood.removeClass("faded");
+      });
+
+      cy.on("mouseout", "node", () => {
+      cy.elements().removeClass("faded");
+    });
+
 
     return cy;
   };
