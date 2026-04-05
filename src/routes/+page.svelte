@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { resolve } from '$app/paths';
+
   import cytoscape, { type NodeSingular } from "cytoscape";
 
   let container: HTMLDivElement;
@@ -7,7 +9,7 @@
 
   // グラフデータの取得
   const fetchGraphData = async () => {
-    const response = await fetch("/player_graph.json");
+    const response = await fetch(resolve("/player_graph.json"));
     const graphData = await response.json();
 
     return graphData;
