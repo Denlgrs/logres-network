@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import cytoscape from "cytoscape";
+  import cytoscape, { type NodeSingular } from "cytoscape";
 
   let container: HTMLDivElement;
+  let selectedNode: NodeSingular | null = null;
 
   // グラフデータの取得
   const fetchGraphData = async () => {
@@ -59,19 +60,40 @@
       wheelSensitivity: 5
     });
 
-    cy.on("mouseover", "node", (e) => {
-      const node = e.target;
-
+    // 隣接強調処理
+    const highlightNeighborhood = (node: NodeSingular) => {
       // 全体を薄く
       cy.elements().addClass("faded");
 
       // 対象ノードとその周辺を強調
-      const neighborhood = node.closedNeighborhood();
-      neighborhood.removeClass("faded");
-      });
+      node.closedNeighborhood().removeClass("faded");
+    };
 
-      cy.on("mouseout", "node", () => {
+    // リセット処理
+    const clearHighlight = () => {
       cy.elements().removeClass("faded");
+    };
+
+    // PC（ホバー）
+    cy.on("mouseover", "node", (e) => {
+      highlightNeighborhood(e.target);
+    });
+
+    cy.on("mouseout", "node", () => {
+      clearHighlight();
+    });
+
+    // スマホ（タップ）
+    cy.on("tap", "node", (e) => {
+      const node = e.target;
+
+      if (selectedNode === node) {
+        clearHighlight();
+        selectedNode = null;
+      } else {
+        highlightNeighborhood(node);
+        selectedNode = node;
+      }
     });
 
 
