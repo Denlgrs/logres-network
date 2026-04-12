@@ -150,12 +150,12 @@
 <div class="relative">
 
     <!-- ネットワーク -->
-	<div bind:this={mandora_container} class:hidden={active !== "mandora"} class="relative w-screen h-screen"></div>
+	<div bind:this={mandora_container} class:hidden={active !== "mandora"} class="relative w-screen h-[100dvh]"></div>
 
-	<div bind:this={kinopo_container} class:hidden={active !== "kinopo"} class="relative w-screen h-screen"></div>
+	<div bind:this={kinopo_container} class:hidden={active !== "kinopo"} class="relative w-screen h-[100dvh]"></div>
 
     <!-- ボタン（上に重ねる） -->
-	<div class="absolute bottom-4 right-4 -translate-x-1/2 z-10">
+	<div class="absolute bottom-4 right-0 -translate-x-1/2 z-10">
 		<nav class="btn-group preset-outlined-surface-200-800 flex-col p-2 md:flex-row backdrop-blur">
 			<button
 				type="button"
