@@ -1,15 +1,18 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
     import { resolve } from '$app/paths';
+    import { Slider } from '@skeletonlabs/skeleton-svelte';
 
     import cytoscape, { type NodeSingular } from "cytoscape";
 
-    let mandora_cy: cytoscape.Core;
-    let kinopo_cy: cytoscape.Core;
+    let mandora_cy: cytoscape.Core | null = null;
+    let kinopo_cy: cytoscape.Core | null = null;
 
     let mandora_container: HTMLDivElement;
     let kinopo_container: HTMLDivElement;
     let selectedNode: NodeSingular | null = null;
+
+    let fontSize = $state(6);
 
     // グラフデータの取得
     const fetchGraphData = async (world: string) => {
@@ -22,6 +25,11 @@
     // Cytoscapeの初期化
     const createGraph = async (world: string, container: HTMLDivElement) => {
         const graphData = await fetchGraphData(world);
+
+        // フォントサイズをノードに設定
+        graphData.elements.nodes.forEach((node: any) => {
+            node.data.fontSize = fontSize;
+        });
 
         const cy = cytoscape({
         container,
@@ -36,7 +44,7 @@
             selector: "node",
             style: {
                 label: "data(name)",
-                "font-size": 4,
+                "font-size": "data(fontSize)",
                 width: "data(size)",
                 height: "data(size)",
                 "background-color": "data(rgb)" // 事前に "rgb(...)" 文字列を入れておく前提
@@ -112,46 +120,42 @@
         kinopo_cy = await createGraph("kinopo", kinopo_container);
     });
 
-    const getActive = () => (active);
-    $effect: if (getActive() == "mandora") {
-        tick().then(() => {
-            if (mandora_cy) {
-                mandora_cy.fit();
-            }
-        });
+    let timeout: ReturnType<typeof setTimeout>;
+    function updateFontSize(cy: cytoscape.Core, fontSize: number) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            if (!cy) return;
+
+            cy.batch(() => {
+                cy.nodes().forEach(node => {
+                node.data("fontSize", fontSize);
+                });
+            });
+        }, 60);
     }
 
-    $effect: if (getActive() == "kinopo") {
-        tick().then(() => {
-            if (kinopo_cy) {
-                kinopo_cy.fit();
-            }
-        });
-    }
+    const onFontSizeChange = (details: { value: number[] }) => {
+        fontSize = details.value[0];
+        if (active === "mandora" && mandora_cy) {
+            updateFontSize(mandora_cy, fontSize);
+        }
+        if (active === "kinopo" && kinopo_cy) {
+            updateFontSize(kinopo_cy, fontSize);
+        }
+    };
 
-    
 </script>
 
-<!-- <div class="flex justify-center" style="margin-top: 1em;">
-    <nav class="btn-group preset-outlined-surface-200-800 flex-col p-2 md:flex-row">
-        <button type="button" class="btn capitalize" class:preset-filled={active == "mandora"} onclick={() => active = "mandora"}>
-            マンドラ
-        </button> 
-        <button type="button" class="btn capitalize" class:preset-filled={active == "kinopo"} onclick={() => active = "kinopo"}>
-            キノポ
-        </button>  
-    </nav>
-</div> -->
 
 <div class="relative">
 
     <!-- ネットワーク -->
-	<div bind:this={mandora_container} class:hidden={active !== "mandora"} class="relative w-screen h-screen"></div>
+	<div bind:this={mandora_container} class:hidden={active !== "mandora"} class="relative w-screen h-[100dvh]"></div>
 
-	<div bind:this={kinopo_container} class:hidden={active !== "kinopo"} class="relative w-screen h-screen"></div>
+	<div bind:this={kinopo_container} class:hidden={active !== "kinopo"} class="relative w-screen h-[100dvh]"></div>
 
     <!-- ボタン（上に重ねる） -->
-	<div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+	<div class="absolute bottom-4 right-0 -translate-x-1/2 z-10">
 		<nav class="btn-group preset-outlined-surface-200-800 flex-col p-2 md:flex-row backdrop-blur">
 			<button
 				type="button"
@@ -171,5 +175,25 @@
 			</button>
 		</nav>
 	</div>
+
+    <!-- 名前のフォントサイズ調整スライダー -->
+    <div class="absolute bottom-6 left-2/7 -translate-x-1/2 z-10 w-80 max-w-1/2">
+        <Slider defaultValue={[6]} min={1} max={30} step={0.5} onValueChange={onFontSizeChange} class="p-4 backdrop-blur">
+            <Slider.Label>名前の大きさ</Slider.Label>
+            <Slider.Control>
+                <Slider.Track>
+                    <Slider.Range />
+                </Slider.Track>
+                <Slider.Thumb index={0}>
+                    <Slider.HiddenInput />
+                </Slider.Thumb>
+            </Slider.Control>
+            <Slider.MarkerGroup>
+                <Slider.Marker value={1} />
+                <Slider.Marker value={15} />
+                <Slider.Marker value={30} />
+            </Slider.MarkerGroup>
+        </Slider>
+    </div>
 
 </div>
